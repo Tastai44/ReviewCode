@@ -34,9 +34,10 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { useForm, SubmitHandler } from "react-hook-form";
 
 import NativeSelect from '@mui/material/NativeSelect';
-import EditAppointment from '../EditAppointment/EditAppointment';
+import EditAppointment from '../UpsertAppointment/UpsertAppointment';
+import UpsertAppModal from '../UpsertAppointment/UpsertAppModal';
 
-interface AppointmentData {
+export interface AppointmentData {
   title: string,
   candidateName: string,
   candidatePosition: string,
@@ -44,8 +45,10 @@ interface AppointmentData {
   startTime: string,
   endTime: string,
   recruiterName: string,
-  idAppointment: number
+  idAppointment?: number
 }
+
+export type AppointmentDataForm = Omit<AppointmentData, 'candidatePosition' | 'dateOfAppointment'| 'recruiterName'>
 
 interface Candidate {
   idCandidate: number;
@@ -70,46 +73,40 @@ export default function Appointment() {
   // use for popup card when it was done
   // const [loading, setLoading] = React.useState<boolean>(false);
 
-  const [titleBackup, setTitleBackup] = React.useState<string>('');
-  const [candidateNameBackup, setCandidateNameBackup] = React.useState<string>('');
-
-  const [startDateBackup, setStartDateBackup] = React.useState<string>('');
-  const [endDateBackup, setEndDateBackup] = React.useState<string>('');
-  const [appointmentId, setAppointmentId] = React.useState<number>(0);
+  const [defaultApp, setDefaultApp] = React.useState<AppointmentData>()
 
 
   const [open, setOpen] = React.useState(false);
+  const handleClickAdd = () => {
+    setDefaultApp(undefined)
+    handleOpen()
+  }
+
+  const handleClickUpdate = (defaultValues: AppointmentData) => {
+    setDefaultApp(defaultValues)
+    handleOpen()
+  }
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
   const [openEdit, setOpenEdit] = React.useState(false);
   const handleCloseEdit = () => setOpenEdit(false);
-  
-  const handleOpenEdit = (id:number, title:string, startDate:string, endDate:string, canName: string) => {
-    setAppointmentId(id);
-    setTitleBackup(title);
-    setCandidateNameBackup(canName);
-    setStartDateBackup(startDate);
-    setEndDateBackup(endDate);
-    reset({
-      idAppointment: id,
-      title: title,
-      startTime: startDate,
-      endTime: endDate,
-      candidateName: canName
-    })
-    setOpenEdit(true);
-  }
+
 
 
   const [appointment, setAppointment] = React.useState<AppointmentData[]>([]);
   const [candidate, setCandidate] = React.useState<Candidate[]>([]);
-  React.useEffect(() => {
+
+  const fetchAppointments = React.useCallback(() => {
     const url = 'https://localhost:7166/api/Appointment';
     axios.get(url).then((res) => {
       setAppointment(res.data);
     });
-  }, []);
+  }, [])
+
+  React.useEffect(() => {
+      fetchAppointments()
+  }, [fetchAppointments]);
   // console.log(appointment)
 
   React.useEffect(() => {
@@ -120,28 +117,21 @@ export default function Appointment() {
   }, []);
 
 
-  const { register, handleSubmit, reset} = useForm<AppointmentData>();
-  // const onSubmit: SubmitHandler<AppointmentData> = data => axios.post(url, {
-    
-  // });
 
-  // const onSubmit: SubmitHandler<AppointmentData> = data => console.log(data);
-
-
-  const onSubmit: SubmitHandler<AppointmentData> = data => {
-    try {
-      axios.post('https://localhost:7166/api/Appointment', {
-        title: data.title,
-        candidateName: data.candidateName,
-        startTime: data.startTime,
-        endTime: data.endTime,
-        recruiterName: data.recruiterName,
-      });
-    } catch (error) {
-      console.error('Error deleting item:', error);
-    }
-    window.location.reload();
-  }
+  // const onSubmit: SubmitHandler<AppointmentData> = data => {
+  //   try {
+  //     axios.post('https://localhost:7166/api/Appointment', {
+  //       title: data.title,
+  //       candidateName: data.candidateName,
+  //       startTime: data.startTime,
+  //       endTime: data.endTime,
+  //       recruiterName: data.recruiterName,
+  //     });
+  //   } catch (error) {
+  //     console.error('Error deleting item:', error);
+  //   }
+  //   window.location.reload();
+  // }
 
   const handleDelete = async (id: number) => {
     try {
@@ -156,107 +146,13 @@ export default function Appointment() {
   
   return (
 <>
-
-<Modal
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={style}>
-            <div style={{fontFamily:"Inria Sans", fontSize:"32px" }}>Add an Appointment</div>
-            <Box
-                component="form"
-                sx={{
-                    '& .MuiTextField-root': { m: 1, width: '25ch' },
-                }}
-                noValidate
-                autoComplete="off"
-                onSubmit={handleSubmit(onSubmit)}
-                >
-                    <FormControl fullWidth sx={{ m: 1 }}>
-                        {/* <InputLabel htmlFor="outlined-adornment-amount">Title</InputLabel> */}
-                        <Input
-                            id="input-with-icon-adornment"
-                            startAdornment={
-                                <InputAdornment position="start">
-                                </InputAdornment>
-                            }
-                            type='text'
-                            placeholder='Appointment title'
-                            {...register("title")}
-                        />
-                        </FormControl>
-                        <FormControl fullWidth sx={{ m: 1 }}>
-                        <InputLabel variant="standard" htmlFor="uncontrolled-native">
-                          Candidate Name
-                        </InputLabel>
-                        
-                        <NativeSelect
-                        {...register("candidateName")}
-                        >
-                          {candidate.map((item) => (
-                            <option key={item.idCandidate} value={item.candidateName}>{item.candidateName}</option>
-                          ))}
-                        </NativeSelect>
-                      </FormControl>
-
-                    <div style={{display:"flex"}}>
-                        <FormControl fullWidth sx={{ m: 1}}>
-                            Start Date: 
-                            <OutlinedInput
-                                id="outlined-adornment-amount"
-                                placeholder='StartTime'
-                                type='datetime-local'
-                                {...register("startTime")}
-                            />
-                        </FormControl>
-
-                        <FormControl fullWidth sx={{ m: 1 }}>
-                        {/* <InputLabel htmlFor="outlined-adornment-amount">EndTime</InputLabel> */}
-                        End Date: <OutlinedInput
-                            id="outlined-adornment-amount"
-                            label="EndTime"
-                            type='datetime-local'
-                            style={{width:"200px"}}
-                            {...register("endTime")}
-                        />
-                        </FormControl>
-                    </div>
-
-                    <div style={{display:'flex', justifyContent:'flex-end', gap:'5px', width:"410px"}}>
-                        <Button variant="contained" 
-                            sx={{':hover': {
-                                bgcolor: 'secondary.main',
-                                color: 'black',
-                            },}}
-                            type="submit"
-                            // onClick={handleClose}
-                        >
-                            Add
-                        </Button>
-                        <Button variant="contained" color="error"
-                        sx={{':hover': {
-                            bgcolor: 'secondary.main',
-                            color: 'red',
-                        },}}
-                        onClick={handleClose}>Cancle</Button>
-                    </div>
-            </Box>
-        </Box>
-</Modal>
-
-<Modal
-        open={openEdit}
-        onClose={handleCloseEdit}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-      <EditAppointment onClickCancle={handleCloseEdit} titleBackup={titleBackup} candidateNameBackup={candidateNameBackup}  startDateBackup={startDateBackup} endDateBackup={endDateBackup} appointmentId={appointmentId}/>
-</Modal>
-
-
-
+  <UpsertAppModal 
+    openModal={open}
+    onClickCancel={handleClose}
+    onSubmitSuccess={fetchAppointments}
+    defaultApp={defaultApp}
+    key={defaultApp?.idAppointment}
+  />
     <TableContainer component={Paper} sx={{ width: 1300 }}>
       <Table sx={{ minWidth: 650 }} aria-label="simple table">
       <TableHead> 
@@ -275,7 +171,7 @@ export default function Appointment() {
                   placeholder="Search appointment..."
                 />
             </Paper>
-            <Button onClick={handleOpen} variant="outlined" startIcon={<AddCircleIcon />} 
+            <Button onClick={handleClickAdd} variant="outlined" startIcon={<AddCircleIcon />} 
               sx={{ width: '230px', p: '12px' , borderBlockColor:"black", color:"black", ':hover': {
               bgcolor: 'black',
               color: 'white',
@@ -317,14 +213,14 @@ export default function Appointment() {
                 <EditCalendarIcon color='success' sx={{':hover': {
                   color: 'black',
                 },}}
-                onClick={() => handleOpenEdit(row.idAppointment, row.title, row.startTime, row.endTime, row.candidateName)}
+                onClick={() => handleClickUpdate(row)}
                 />
                 <DeleteIcon 
                   color='error'  
                   sx={{':hover': {
                     color: 'blue',
                   },}}
-                  onClick={() => handleDelete(row.idAppointment)}
+                  onClick={() => handleDelete(row.idAppointment!)}
                 />
               </TableCell >
             </TableRow>

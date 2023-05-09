@@ -1,0 +1,15 @@
+.Container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.Card {
+    margin: 0px 20px 0px 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.popAddCandidate {
+    position: absolute;
+}

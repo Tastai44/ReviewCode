@@ -9,7 +9,7 @@ import CandidateAdd from './Components/CandidateAdd/CandidateAdd.tsx'
 import Comment from './pages/Comment/Comment.tsx'
 import EditComment from './Components/EditComment/EditComment.tsx'
 import DemoDndPage from './pages/DemoDndPage.tsx'
-import EditAppointment from './Components/EditAppointment/EditAppointment.tsx'
+import EditAppointment from './Components/UpsertAppointment/UpsertAppointment.tsx'
 import ExampleDnDPage from './pages/ExampleDnDPage/StatusList.tsx'
 
 
